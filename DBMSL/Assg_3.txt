@@ -1,0 +1,222 @@
+3. SQL Queries all types of Join, Sub-Query and View:
+   Write at least 10 SQL queries for suitable database application using SQL DML        statements.
+
+
+CREATE TABLE PlacementDrive(
+	Drive_id INT PRIMARY KEY AUTO_INCREMENT,
+	Pcompany_name VARCHAR(50),
+	package DECIMAL(10,2),
+	location VARCHAR(50)
+);
+
+CREATE TABLE Training(
+	T_id INT PRIMARY KEY AUTO_INCREMENT,
+	Tcompany_name VARCHAR(50),
+	T_fee DECIMAL(10,2),
+	T_year YEAR
+);
+
+CREATE TABLE Student(
+	s_id INT PRIMARY KEY AUTO_INCREMENT,
+	Drive_id INT,
+	T_id INT,
+	s_name VARCHAR(50),
+	CGPA DECIMAL(3,2),
+	s_branch VARCHAR(50),
+	s_dob DATE,
+	FOREIGN KEY (Drive_id) REFERENCES PlacementDrive(Drive_id) ON DELETE CASCADE,
+	FOREIGN KEY (T_id) REFERENCES Training(T_id) ON DELETE CASCADE
+);
+
+INSERT INTO PlacementDrive (Pcompany_name, package, location) VALUES
+('Infosys', 30000, 'Pune'),
+('TCS', 40000, 'Mumbai'),
+('Wipro', 50000, 'Hyderabad'),
+('TechMahindra', 30000, 'Delhi');
+
+INSERT INTO Training (Tcompany_name, T_fee, T_year) VALUES
+('Udemy', 10000, 2019),
+('Coursera', 12000, 2020),
+('edX', 15000, 2021),
+('Simplilearn', 13000, 2022);
+
+INSERT INTO Student (Drive_id, T_id, s_name, CGPA, s_branch, s_dob) VALUES
+(1, 1, 'Ankit Sharma', 8.2, 'Computer', '2000-01-01'),
+(2, 1, 'Deepa Kaur', 7.1, 'IT', '1999-03-21'),
+(3, 2, 'Amit Mehra', 6.8, 'Electronics', '1998-11-05'),
+(1, 1, 'Divya Nair', 9.3, 'Computer', '2001-05-14'),
+(4, 3, 'Raj Patel', 6.5, 'Mechanical', '2000-07-25'),
+(2, 4, 'Arun Verma', 7.8, 'IT', '1999-06-19'),
+(3, 2, 'Disha Kulkarni', 7.0, 'Computer', '2001-08-30'),
+(2, 3, 'Rahul Bose', 8.5, 'Civil', '2000-12-01'),
+(1, 1, 'Abhay Sinha', 6.9, 'IT', '1998-09-23'),
+(3, 3, 'Neha Rathi', 8.9, 'Computer', '2001-04-04');
+
+mysql> SELECT * FROM PlacementDrive;
++----------+---------------+----------+-----------+
+| Drive_id | Pcompany_name | package  | location  |
++----------+---------------+----------+-----------+
+|        1 | Infosys       | 30000.00 | Pune      |
+|        2 | TCS           | 40000.00 | Mumbai    |
+|        3 | Wipro         | 50000.00 | Hyderabad |
+|        4 | TechMahindra  | 30000.00 | Delhi     |
++----------+---------------+----------+-----------+
+
+mysql> SELECT * FROM Training;
++------+---------------+----------+--------+
+| T_id | Tcompany_name | T_fee    | T_year |
++------+---------------+----------+--------+
+|    1 | Udemy         | 10000.00 |   2019 |
+|    2 | Coursera      | 12000.00 |   2020 |
+|    3 | edX           | 15000.00 |   2021 |
+|    4 | Simplilearn   | 13000.00 |   2022 |
++------+---------------+----------+--------+
+
+mysql> SELECT * FROM Student;
++------+----------+------+----------------+------+-------------+------------+
+| s_id | Drive_id | T_id | s_name         | CGPA | s_branch    | s_dob      |
++------+----------+------+----------------+------+-------------+------------+
+|    1 |        1 |    1 | Ankit Sharma   | 8.20 | Computer    | 2000-01-01 |
+|    2 |        2 |    1 | Deepa Kaur     | 7.10 | IT          | 1999-03-21 |
+|    3 |        3 |    2 | Amit Mehra     | 6.80 | Electronics | 1998-11-05 |
+|    4 |        1 |    1 | Divya Nair     | 9.30 | Computer    | 2001-05-14 |
+|    5 |        4 |    3 | Raj Patel      | 6.50 | Mechanical  | 2000-07-25 |
+|    6 |        2 |    4 | Arun Verma     | 7.80 | IT          | 1999-06-19 |
+|    7 |        3 |    2 | Disha Kulkarni | 7.00 | Computer    | 2001-08-30 |
+|    8 |        2 |    3 | Rahul Bose     | 8.50 | Civil       | 2000-12-01 |
+|    9 |        1 |    1 | Abhay Sinha    | 6.90 | IT          | 1998-09-23 |
+|   10 |        3 |    3 | Neha Rathi     | 8.90 | Computer    | 2001-04-04 |
++------+----------+------+----------------+------+-------------+------------+
+
+--Find Student details and Placement details using Natural join
+mysql> SELECT * FROM Student NATURAL JOIN PlacementDrive;
++----------+------+------+----------------+------+-------------+------------+---------------+----------+-----------+
+| Drive_id | s_id | T_id | s_name         | CGPA | s_branch    | s_dob      | Pcompany_name | package  | location  |
++----------+------+------+----------------+------+-------------+------------+---------------+----------+-----------+
+|        1 |    1 |    1 | Ankit Sharma   | 8.20 | Computer    | 2000-01-01 | Infosys       | 30000.00 | Pune      |
+|        1 |    4 |    1 | Divya Nair     | 9.30 | Computer    | 2001-05-14 | Infosys       | 30000.00 | Pune      |
+|        1 |    9 |    1 | Abhay Sinha    | 6.90 | IT          | 1998-09-23 | Infosys       | 30000.00 | Pune      |
+|        2 |    2 |    1 | Deepa Kaur     | 7.10 | IT          | 1999-03-21 | TCS           | 40000.00 | Mumbai    |
+|        2 |    6 |    4 | Arun Verma     | 7.80 | IT          | 1999-06-19 | TCS           | 40000.00 | Mumbai    |
+|        2 |    8 |    3 | Rahul Bose     | 8.50 | Civil       | 2000-12-01 | TCS           | 40000.00 | Mumbai    |
+|        3 |    3 |    2 | Amit Mehra     | 6.80 | Electronics | 1998-11-05 | Wipro         | 50000.00 | Hyderabad |
+|        3 |    7 |    2 | Disha Kulkarni | 7.00 | Computer    | 2001-08-30 | Wipro         | 50000.00 | Hyderabad |
+|        3 |   10 |    3 | Neha Rathi     | 8.90 | Computer    | 2001-04-04 | Wipro         | 50000.00 | Hyderabad |
+|        4 |    5 |    3 | Raj Patel      | 6.50 | Mechanical  | 2000-07-25 | TechMahindra  | 30000.00 | Delhi     |
++----------+------+------+----------------+------+-------------+------------+---------------+----------+-----------+
+
+--Find all the student details with company_name who have conducted in same drive
+mysql> SELECT s.*, p.Pcompany_name FROM Student s INNER JOIN PlacementDrive p ON s.Drive_id = p.Drive_id;
++------+----------+------+----------------+------+-------------+------------+---------------+
+| s_id | Drive_id | T_id | s_name         | CGPA | s_branch    | s_dob      | Pcompany_name |
++------+----------+------+----------------+------+-------------+------------+---------------+
+|    1 |        1 |    1 | Ankit Sharma   | 8.20 | Computer    | 2000-01-01 | Infosys       |
+|    4 |        1 |    1 | Divya Nair     | 9.30 | Computer    | 2001-05-14 | Infosys       |
+|    9 |        1 |    1 | Abhay Sinha    | 6.90 | IT          | 1998-09-23 | Infosys       |
+|    2 |        2 |    1 | Deepa Kaur     | 7.10 | IT          | 1999-03-21 | TCS           |
+|    6 |        2 |    4 | Arun Verma     | 7.80 | IT          | 1999-06-19 | TCS           |
+|    8 |        2 |    3 | Rahul Bose     | 8.50 | Civil       | 2000-12-01 | TCS           |
+|    3 |        3 |    2 | Amit Mehra     | 6.80 | Electronics | 1998-11-05 | Wipro         |
+|    7 |        3 |    2 | Disha Kulkarni | 7.00 | Computer    | 2001-08-30 | Wipro         |
+|   10 |        3 |    3 | Neha Rathi     | 8.90 | Computer    | 2001-04-04 | Wipro         |
+|    5 |        4 |    3 | Raj Patel      | 6.50 | Mechanical  | 2000-07-25 | TechMahindra  |
++------+----------+------+----------------+------+-------------+------------+---------------+
+
+--List all the student name and student branch of student having package 40000
+SELECT s.s_name, s.s_branch FROM Student s INNER JOIN PlacementDrive p ON 
+s.Drive_id = p.Drive_id WHERE p.package = 40000;
++------------+----------+
+| s_name     | s_branch |
++------------+----------+
+| Deepa Kaur | IT       |
+| Arun Verma | IT       |
+| Rahul Bose | Civil    |
++------------+----------+
+
+--List all the students names, company name having training fee more than 12000
+SELECT s.s_name, t.Tcompany_name FROM Student s INNER JOIN Training t ON
+s.T_id = t.T_id WHERE t.T_fee > 12000;
++------------+---------------+
+| s_name     | Tcompany_name |
++------------+---------------+
+| Raj Patel  | edX           |
+| Rahul Bose | edX           |
+| Neha Rathi | edX           |
+| Arun Verma | Simplilearn   |
++------------+---------------+
+
+--Display all training details attended by Amit 
+SELECT t.* FROM Student s INNER JOIN Training t ON s.T_id = t.T_id
+WHERE s.s_name = 'Amit Mehra';
++------+---------------+----------+--------+
+| T_id | Tcompany_name | T_fee    | T_year |
++------+---------------+----------+--------+
+|    2 | Coursera      | 12000.00 |   2020 |
++------+---------------+----------+--------+
+
+--List the total number of companies who conduct training before 2022
+SELECT COUNT(DISTINCT Tcompany_name) FROM Training WHERE T_year < 2022;
++-------------------------------+
+| COUNT(DISTINCT Tcompany_name) |
++-------------------------------+
+|                             3 |
++-------------------------------+
+
+--List student name with company 'TCS' and location 'Mumbai'
+SELECT s.s_name FROM Student s INNER JOIN PlacementDrive p ON s.Drive_id = p.Drive_id
+WHERE p.Pcompany_name = 'TCS' AND p.location = 'Mumbai';
++------------+
+| s_name     |
++------------+
+| Deepa Kaur |
+| Arun Verma |
+| Rahul Bose |
++------------+
+
+--Create a view showing the student and training details
+CREATE VIEW StudentTrainingDetails AS
+SELECT s.s_id, s.s_name, s.CGPA, s.s_branch, s.s_dob, t.Tcompany_name, t.T_fee, t.T_year
+FROM Student s INNER JOIN Training t ON s.T_id = t.T_id;
+mysql> SELECT * FROM StudentTrainingDetails;
++------+----------------+------+-------------+------------+---------------+----------+--------+
+| s_id | s_name         | CGPA | s_branch    | s_dob      | Tcompany_name | T_fee    | T_year |
++------+----------------+------+-------------+------------+---------------+----------+--------+
+|    1 | Ankit Sharma   | 8.20 | Computer    | 2000-01-01 | Udemy         | 10000.00 |   2019 |
+|    2 | Deepa Kaur     | 7.10 | IT          | 1999-03-21 | Udemy         | 10000.00 |   2019 |
+|    4 | Divya Nair     | 9.30 | Computer    | 2001-05-14 | Udemy         | 10000.00 |   2019 |
+|    9 | Abhay Sinha    | 6.90 | IT          | 1998-09-23 | Udemy         | 10000.00 |   2019 |
+|    3 | Amit Mehra     | 6.80 | Electronics | 1998-11-05 | Coursera      | 12000.00 |   2020 |
+|    7 | Disha Kulkarni | 7.00 | Computer    | 2001-08-30 | Coursera      | 12000.00 |   2020 |
+|    5 | Raj Patel      | 6.50 | Mechanical  | 2000-07-25 | edX           | 15000.00 |   2021 |
+|    8 | Rahul Bose     | 8.50 | Civil       | 2000-12-01 | edX           | 15000.00 |   2021 |
+|   10 | Neha Rathi     | 8.90 | Computer    | 2001-04-04 | edX           | 15000.00 |   2021 |
+|    6 | Arun Verma     | 7.80 | IT          | 1999-06-19 | Simplilearn   | 13000.00 |   2022 |
++------+----------------+------+-------------+------------+---------------+----------+--------+
+
+--Change the CGPA value of Neha Rathi to 9.0 in the created view
+UPDATE StudentTrainingDetails SET CGPA = 9.0 WHERE s_name = 'Neha Rathi';
+mysql> SELECT * FROM StudentTrainingDetails;
++------+----------------+------+-------------+------------+---------------+----------+--------+
+| s_id | s_name         | CGPA | s_branch    | s_dob      | Tcompany_name | T_fee    | T_year |
++------+----------------+------+-------------+------------+---------------+----------+--------+
+|    1 | Ankit Sharma   | 8.20 | Computer    | 2000-01-01 | Udemy         | 10000.00 |   2019 |
+|    2 | Deepa Kaur     | 7.10 | IT          | 1999-03-21 | Udemy         | 10000.00 |   2019 |
+|    4 | Divya Nair     | 9.30 | Computer    | 2001-05-14 | Udemy         | 10000.00 |   2019 |
+|    9 | Abhay Sinha    | 6.90 | IT          | 1998-09-23 | Udemy         | 10000.00 |   2019 |
+|    3 | Amit Mehra     | 6.80 | Electronics | 1998-11-05 | Coursera      | 12000.00 |   2020 |
+|    7 | Disha Kulkarni | 7.00 | Computer    | 2001-08-30 | Coursera      | 12000.00 |   2020 |
+|    5 | Raj Patel      | 6.50 | Mechanical  | 2000-07-25 | edX           | 15000.00 |   2021 |
+|    8 | Rahul Bose     | 8.50 | Civil       | 2000-12-01 | edX           | 15000.00 |   2021 |
+|   10 | Neha Rathi     | 9.00 | Computer    | 2001-04-04 | edX           | 15000.00 |   2021 |
+|    6 | Arun Verma     | 7.80 | IT          | 1999-06-19 | Simplilearn   | 13000.00 |   2022 |
++------+----------------+------+-------------+------------+---------------+----------+--------+
+
+--Delete the entry of Raj Patel from the view
+mysql> DELETE FROM StudentTrainingDetails WHERE s_name = 'Raj Patel';
+ERROR 1395 (HY000): Can not delete from join view 'dbmsl.studenttrainingdetails'
+You can only delete from a simple (updatable) view, but not from a join view, unless very specific conditions are met.
+
+--Delete the complete view 
+DROP VIEW StudentTrainingDetails;
+mysql> SELECT * FROM StudentTrainingDetails;
+ERROR 1146 (42S02): Table 'dbmsl.studenttrainingdetails' doesn't exist
