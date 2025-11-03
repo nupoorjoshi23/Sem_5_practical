@@ -1,0 +1,146 @@
+Basics of Procedural SQL 
+
+Stored Procedure: This is a set of SQL statements saved in the database under a name (like calc_fine). Instead of re-writing the logic, you can just CALL the procedure by its name. This is efficient, reusable, and secure.
+
+Delimiter: A delimiter is a character that marks the end of a command. Normally, it's a semicolon (;). Since a procedure contains many commands that end in ;, we temporarily change the delimiter to $$ (delimiter $$). This tells MySQL to treat everything until the $$ as one single "create procedure" command. We change it back to ; at the end.
+
+Parameters (IN): Procedures can accept data. (IN in_roll_no INT) means your procedure requires one input value, an integer, which it will call in_roll_no inside the procedure.
+
+Variable Declaration (DECLARE): DECLARE days INT DEFAULT 0; creates a temporary variable (like in Python or Java) that exists only inside the procedure. You're creating days, fine, error_flag, and issue_date to hold values during the calculation.
+
+Control Flow (IF...THEN...ELSEIF...): This is the core programming logic. It allows your procedure to make decisions. "IF days is in this range, do this. ELSE IF days is in another range, do that."
+
+SQL Operations:
+SELECT ... INTO ...: This fetches data from a table and stores it into your declared variables.
+UPDATE: This modifies existing data in a table (like changing the Status to 'R').
+INSERT: This adds a new row to a table (like logging the fine in the Fine table).
+
+Exception Handling (DECLARE EXIT HANDLER): This is your safety net. DECLARE EXIT HANDLER FOR 1452 tells MySQL: "If error code 1452 (a foreign key violation) happens, stop what you're doing, run this handler code instead, and then exit the procedure." In your case, the handler code is set error_flag = 1;
+
+
+CREATE TABLE Borrower(
+	Roll_no INT PRIMARY KEY,
+	Name VARCHAR(50),
+	DateofIssue DATE,
+	NameofBook VARCHAR(50),
+	Status CHAR(1)
+);
+
+CREATE TABLE Fine(
+	Roll_no INT,
+	DateofReturn DATE,
+	Amount INT,
+	FOREIGN KEY (Roll_no) REFERENCES Borrower(Roll_no)
+);
+
+INSERT INTO Borrower (Roll_no, Name, DateofIssue, NameofBook, Status) VALUES
+(1, 'Nupoor', '2025-09-20', 'C++ programming', 'I'),
+(2, 'Vaidehi', '2025-10-22', 'Data Structures and Algorithms', 'I'),
+(3, 'Rupali', '2025-10-15', 'Database Systems', 'I');
+
+mysql> SELECT * FROM Borrower;
++---------+---------+-------------+--------------------------------+--------+
+| Roll_no | Name    | DateofIssue | NameofBook                     | Status |
++---------+---------+-------------+--------------------------------+--------+
+|       1 | Nupoor  | 2025-09-20  | C++ programming                | I      |
+|       2 | Vaidehi | 2025-10-22  | Data Structures and Algorithms | I      |
+|       3 | Rupali  | 2025-10-15  | Database Systems               | I      |
++---------+---------+-------------+--------------------------------+--------+
+
+--Change the delimiter
+DELIMITER $$
+
+--Create the procedure
+CREATE PROCEDURE calc_fine(IN in_roll_no INT)
+BEGIN
+	--Declare variables
+	DECLARE days INT DEFAULT 0;
+	DECLARE fine INT DEFAULT 0;
+	DECLARE error_flag INT DEFAULT 0;
+	DECLARE issue_date DATE;
+
+	--If the roll no does not exist, cannot insert in child table
+	DECLARE CONTINUE HANDLER FOR 1452
+	BEGIN
+		SET error_flag = 1;
+	END;
+
+	SELECT DateofIssue INTO issue_date FROM Borrower
+	WHERE Roll_no = in_roll_no;
+
+	SET days = DATEDIFF(CURDATE(), issue_date);
+
+	IF days <= 30 AND days > 15 THEN
+		SET fine = 5 * (days - 15);
+	ELSEIF days > 30 THEN
+		SET fine = (5 * 15) + (50 * (days - 30));
+	ELSE
+		SET fine = 0;
+	END IF;
+
+	UPDATE Borrower SET Status = 'R' 
+	WHERE Roll_no = in_roll_no;
+
+	INSERT INTO Fine (Roll_no, DateofReturn, Amount) VALUES
+	(in_roll_no, CURDATE(), fine);
+
+	IF error_flag = 1 THEN
+		SELECT 'Invalid roll no' AS Message;
+	ELSE
+		SELECT 'Fine amount inserted in table' AS Message;
+	END IF;
+
+END $$
+
+--Reset the delimiter
+DELIMITER ;
+
+mysql> CALL calc_fine(2);
++-------------------------------+
+| Message                       |
++-------------------------------+
+| Fine amount inserted in table |
++-------------------------------+
+1 row in set (0.03 sec)
+
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> CALL calc_fine(1);
++-------------------------------+
+| Message                       |
++-------------------------------+
+| Fine amount inserted in table |
++-------------------------------+
+1 row in set (0.03 sec)
+
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> CALL calc_fine(3);
++-------------------------------+
+| Message                       |
++-------------------------------+
+| Fine amount inserted in table |
++-------------------------------+
+1 row in set (0.03 sec)
+
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> CALL calc_fine(4);
++-----------------+
+| Message         |
++-----------------+
+| Invalid roll no |
++-----------------+
+1 row in set (0.02 sec)
+
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> SELECT * FROM Fine;
++---------+--------------+--------+
+| Roll_no | DateofReturn | Amount |
++---------+--------------+--------+
+|       2 | 2025-11-02   |      0 |
+|       1 | 2025-11-02   |    725 |
+|       3 | 2025-11-02   |     15 |
++---------+--------------+--------+
+3 rows in set (0.00 sec)

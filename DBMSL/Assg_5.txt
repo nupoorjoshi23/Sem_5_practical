@@ -1,0 +1,128 @@
+STORED PROCEDURE:
+1. Used to perform an action (INSERT, UPDATE, etc)
+2. CALL procedure_name();
+3. Does not return a value directly. Uses OUT parameter instead.
+4. Can use IN, OUT, INOUT
+
+STORED FUNCTION
+1. To calculate and return a single value
+2. SELECT function_name(); (Can be used in SELECT, WHERE, etc)
+3. Must return a single value using RETURN.
+4. Can only use IN.
+
+CREATE TABLE StudMarks(
+	Name VARCHAR(50),
+	Marks INT
+);
+
+CREATE TABLE Result(
+	Roll_number INT PRIMARY KEY AUTO_INCREMENT,
+	Name VARCHAR(50),
+	Class VARCHAR(50)
+);
+
+INSERT INTO StudMarks (Name, Marks) VALUES
+('Nupoor', 1400),
+('Vaidehi', 920),
+('Rupali', 830);
+
+--Stored procedure (for one student)
+DELIMITER $$
+CREATE PROCEDURE proc_grade(
+	IN p_name VARCHAR(50),
+	IN p_marks INT
+)
+BEGIN
+	DECLARE v_class VARCHAR(50);
+
+	IF p_marks BETWEEN 990 AND 1500 THEN
+		SET v_class = 'Distinction';
+	ELSEIF p_marks BETWEEN 900 AND 989 THEN
+		SET v_class = 'First Class';
+	ELSEIF p_marks BETWEEN 825 AND 899 THEN
+		SET v_class = 'Higher Second Class';
+	ELSE
+		SET v_class = 'No category';
+	END IF;
+
+	INSERT INTO Result (Name, Class) VALUES
+	(p_name, v_class);
+END $$
+DELIMITER ;
+
+--Stored function
+DELIMITER $$
+CREATE FUNCTION fn_grade(
+	p_marks INT
+)
+RETURNS VARCHAR(50)
+DETERMINISTIC
+BEGIN
+	DECLARE v_class VARCHAR(50);
+
+	IF p_marks BETWEEN 990 AND 1500 THEN
+		SET v_class = 'Distinction';
+	ELSEIF p_marks BETWEEN 900 AND 989 THEN
+		SET v_class = 'First Class';
+	ELSEIF p_marks BETWEEN 825 AND 899 THEN
+		SET v_class = 'Higher Second Class';
+	ELSE
+		SET v_class = 'No category';
+	END IF;
+	
+	RETURN v_class;
+END $$
+DELIMITER ;
+
+
+--Find result of all students at once
+DELIMITER $$
+CREATE PROCEDURE proc_grade_all()
+BEGIN 
+	INSERT INTO Result(Name, Class)
+	SELECT
+		Name,
+		CASE
+			WHEN Marks BETWEEN 990 AND 1500 THEN 'Distinction'
+			WHEN Marks BETWEEN 900 AND 989 THEN 'First Class'
+			WHEN Marks BETWEEN 825 AND 899 THEN 'Higher Second Class'
+			ELSE 'No category'
+		END AS CLASS
+	FROM StudMarks;
+END $$
+DELIMITER ;
+
+
+--RUNNING THE CODE
+
+mysql> CALL proc_grade_all();
+Query OK, 3 rows affected (0.03 sec)
+mysql> SELECT * FROM Result;
++-------------+---------+---------------------+
+| Roll_number | Name    | Class               |
++-------------+---------+---------------------+
+|           1 | Nupoor  | Distinction         |
+|           2 | Vaidehi | First Class         |
+|           3 | Rupali  | Higher Second Class |
++-------------+---------+---------------------+
+
+mysql> TRUNCATE TABLE Result;
+
+mysql> CALL proc_grade('Vaidehi', 920);
+Query OK, 1 row affected (0.03 sec)
+mysql> SELECT * FROM Result;
++-------------+---------+-------------+
+| Roll_number | Name    | Class       |
++-------------+---------+-------------+
+|           1 | Vaidehi | First Class |
++-------------+---------+-------------+
+
+
+mysql> SELECT Name, Marks, fn_grade(Marks) As Class FROM StudMarks;
++---------+-------+---------------------+
+| Name    | Marks | Class               |
++---------+-------+---------------------+
+| Nupoor  |  1400 | Distinction         |
+| Vaidehi |   920 | First Class         |
+| Rupali  |   830 | Higher Second Class |
++---------+-------+---------------------+
