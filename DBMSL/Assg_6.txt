@@ -1,0 +1,147 @@
+Cursor - 
+Cursor is like a pointer that lets you loop through the result set one row at a time
+
+Implicit Cursor - 
+PL/SQL creates an implicit cursor automatically for every DML statement(INSERT, UPDATE, DELETE) and for SELECT...INTO statements that return only one row.
+You can't OPEN, FETCH, or CLOSE these, but you can check their status after run using special attributes - SQL%FOUND, SQL%NOTFOUND, SQL%ROWCOUNT
+
+Explicit Cursor - 
+These are declared explicitly to process SELECT statements that return multiple rows.
+4 steps - DECLARE(Define cursor in the declare section with name and select query)
+	  OPEN(Execute the query and populate result set)
+	  FETCH(retrieve the next row from the result set into variables)
+	  CLOSE (release the cursor's memory; CLOSE cursor_name)
+
+Parameterized Cursor - 
+It is an explicit cursor that can accept parameters, just like a function. This makes the cursor reusable. You pass the parameter when you OPEN the cursor.
+CURSOR c_student (p_min_roll NUMBER) IS
+  SELECT rolNo, nameSt 
+  FROM Student 
+  WHERE rolNo >= p_min_roll;
+-- When you OPEN it, you pass the value
+OPEN c_student(5); -- This will fetch only students with rolNo 5 or greater
+
+Cursor FOR Loop - 
+It implicitly hanldes the OPEN, FETCH, and CLOSE operations. It declares a variable to hold the current row.
+BEGIN
+  FOR rec IN c_student(0) LOOP -- Pass the parameter here!
+    -- 'rec' already has the data, like rec.rolNo and rec.nameSt
+    DBMS_OUTPUT.PUT_LINE(rec.rolNo || ' - ' || rec.nameSt);
+  END LOOP;
+  -- No CLOSE needed!
+END;
+/
+
+
+CREATE TABLE N_EmpId(
+	EmpId INT PRIMARY KEY,
+	EmpName VARCHAR(50)
+);
+
+CREATE TABLE O_EmpId(
+	EmpId INT PRIMARY KEY,
+	EmpName VARCHAR(50)
+);
+
+--Merge the data available in the newly created table with the data in the old table
+
+INSERT INTO N_EmpId (EmpId, EmpName) VALUES
+(101, 'Alice'),
+(102, 'Bob'),
+(103, 'Charlie'),
+(104, 'David'),
+(105, 'Eve');
+
+INSERT INTO O_EmpId (EmpId, EmpName) VALUES
+(101, 'Alice'),
+(102, 'Bob');
+
+
+--Create the procedure (which contains the cursor)
+
+DELIMITER $$
+CREATE PROCEDURE MergeEmpData(IN p_min_id INT)
+BEGIN
+	DECLARE v_id INT;
+	DECLARE v_name VARCHAR(50);
+
+	DECLARE done INT DEFAULT 0;
+
+	DECLARE c_new_emp CURSOR FOR
+		SELECT EmpId, EmpName FROM N_EmpId WHERE EmpId >= p_min_id;
+
+	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+	OPEN c_new_emp;
+
+	read_loop: LOOP
+		FETCH c_new_emp INTO v_id, v_name;
+		
+		IF done = 1 THEN
+			LEAVE read_loop;
+		END IF;
+
+		IF NOT EXISTS (SELECT 1 FROM O_EmpId WHERE EmpId = v_id) THEN
+			INSERT INTO O_EmpId (EmpId, EmpName) VALUES (v_id, v_name);
+			SELECT 'Data Entered:' AS Message, v_id AS EmployeeID, v_name AS Name;
+		ELSE
+			SELECT 'Data Skipped(already exists):' AS Message, v_id AS EmployeeID, v_name AS Name;
+		END IF;
+	END LOOP;
+
+	CLOSE c_new_emp;
+END $$
+
+DELIMITER ;
+
+
+
+mysql> CALL MergeEmpData(0);
++-------------------------------+------------+-------+
+| Message                       | EmployeeID | Name  |
++-------------------------------+------------+-------+
+| Data Skipped(already exists): |        101 | Alice |
++-------------------------------+------------+-------+
+1 row in set (0.02 sec)
+
++-------------------------------+------------+------+
+| Message                       | EmployeeID | Name |
++-------------------------------+------------+------+
+| Data Skipped(already exists): |        102 | Bob  |
++-------------------------------+------------+------+
+1 row in set (0.03 sec)
+
++---------------+------------+---------+
+| Message       | EmployeeID | Name    |
++---------------+------------+---------+
+| Data Entered: |        103 | Charlie |
++---------------+------------+---------+
+1 row in set (0.03 sec)
+
++---------------+------------+-------+
+| Message       | EmployeeID | Name  |
++---------------+------------+-------+
+| Data Entered: |        104 | David |
++---------------+------------+-------+
+1 row in set (0.03 sec)
+
++---------------+------------+------+
+| Message       | EmployeeID | Name |
++---------------+------------+------+
+| Data Entered: |        105 | Eve  |
++---------------+------------+------+
+1 row in set (0.04 sec)
+
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> SELECT * FROM O_EmpId;
++-------+---------+
+| EmpId | EmpName |
++-------+---------+
+|   101 | Alice   |
+|   102 | Bob     |
+|   103 | Charlie |
+|   104 | David   |
+|   105 | Eve     |
++-------+---------+
+5 rows in set (0.01 sec)

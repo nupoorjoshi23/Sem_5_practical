@@ -1,0 +1,110 @@
+Database Trigger - 
+It is a special type of stored procedure that automatically runs when a specific event happens on a table.
+Event can be a DML statement (INSERT, UPDATE, DELETE)
+For this assignment you need a trigger that fires on UPDATE and another that fires on DELETE
+
+BEFORE Trigger -
+Runs before the data is actually changed or deleted. Ideal for validation or modifying data before it gets saved.
+Ex: A BEFORE INSERT Trigger could check if a new book's publication_year is in the future. If it is we can signal an error to stop the insert from happening.
+
+AFTER Trigger -
+Runs after the data has been successfully changed or deleted. Ideal for logging or updating other related tables after the main change is complete.
+In this assignment we want to audit what was deleted, so we run the trigger AFTER DELETE.
+
+Statement-level Trigger - 
+Fires only once for the entire SQL statement, even if the statement affects 100 rows.
+MySQL does not support statement-level trigger.
+
+Row-level Trigger - 
+Fires once for every single row that is affected by the SQL statement.
+In this assignment it is asked to save the old value of updated or deleted records, so we must act on each specific row.
+
+OLD and NEW Keywords -
+NEW: represents the row as it will be after the operation. Available in INSERT and UPDATE
+OLD: represents the row as it was before the operation. Available in UPDATE and DELETE.
+
+
+CREATE TABLE Library(
+	book_id INT PRIMARY KEY AUTO_INCREMENT,
+	title VARCHAR(50),
+	author VARCHAR(50),
+	status VARCHAR(20) DEFAULT 'Available'
+);
+
+CREATE TABLE Library_Audit(
+	audit_id INT PRIMARY KEY AUTO_INCREMENT,
+	book_id INT,
+	old_title VARCHAR(50),
+	old_author VARCHAR(50),
+	old_status VARCHAR(50),
+	action_type VARCHAR(10) NOT NULL
+);
+
+INSERT INTO Library (title, author, status) VALUES
+('Twisted series', 'Ana Huang', 'Available'),
+('Atomic Habits', 'James Clear', 'Issued'),
+('To kill a Mockingbird', 'Harper Lee', 'Available');
+
+mysql> SELECT * FROM Library;
++---------+-----------------------+-------------+-----------+
+| book_id | title                 | author      | status    |
++---------+-----------------------+-------------+-----------+
+|       1 | Twisted series        | Ana Huang   | Available |
+|       2 | Atomic Habits         | James Clear | Issued    |
+|       3 | To kill a Mockingbird | Harper Lee  | Available |
++---------+-----------------------+-------------+-----------+
+
+DELIMITER $$
+--Trigger 1: Fires AFTER a row is UPDATED
+CREATE TRIGGER after_library_update
+AFTER UPDATE ON Library
+FOR EACH ROW       --row-level trigger
+BEGIN
+	INSERT INTO Library_Audit (book_id, old_title, old_author, old_status, action_type)
+	VALUES (
+		OLD.book_id, 
+		OLD.title, 
+		OLD.author, 
+		OLD.status, 
+		'UPDATE'
+	);
+END $$
+
+--Trigger 2: Fires AFTER a row is deleted
+CREATE TRIGGER after_library_delete
+AFTER DELETE ON Library
+FOR EACH ROW
+BEGIN
+	INSERT INTO Library_Audit (book_id, old_title, old_author, old_status, action_type)
+	VALUES (
+		OLD.book_id, 
+		OLD.title, 
+		OLD.author, 
+		OLD.status, 
+		'DELETE'
+	);
+END $$
+
+DELIMITER ;
+
+--Action 1
+UPDATE Library SET status = 'Issued' WHERE title = 'Twisted series';
+
+--Action 2
+DELETE FROM Library WHERE title = 'To kill a Mockingbird';
+
+mysql> SELECT * FROM Library_Audit;
++----------+---------+-----------------------+------------+------------+-------------+
+| audit_id | book_id | old_title             | old_author | old_status | action_type |
++----------+---------+-----------------------+------------+------------+-------------+
+|        1 |       1 | Twisted series        | Ana Huang  | Available  | UPDATE      |
+|        2 |       3 | To kill a Mockingbird | Harper Lee | Available  | DELETE      |
++----------+---------+-----------------------+------------+------------+-------------+
+
+mysql> SELECT * FROM Library;
++---------+----------------+-------------+--------+
+| book_id | title          | author      | status |
++---------+----------------+-------------+--------+
+|       1 | Twisted series | Ana Huang   | Issued |
+|       2 | Atomic Habits  | James Clear | Issued |
++---------+----------------+-------------+--------+

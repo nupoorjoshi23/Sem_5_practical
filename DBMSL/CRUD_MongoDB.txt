@@ -1,0 +1,433 @@
+Design and Develop MongoDB Queries using CRUD operations. (Use CRUD operations, SAVE method, logical operators etc)
+
+// Create database
+use dbmsl;
+
+// Show all databases
+show dbs;
+
+// Create collection
+db.createCollection("students")
+// collection can also be created during insert process
+db.student.insertOne(Object);
+
+// To show all the collection in selected database
+show collections;
+
+// Inserting multiple students
+db.students.insertMany([
+	{
+		name: "Nupoor Joshi",
+		roll_no: 1,
+		branch: "Computer Science",
+		cgpa: 9.5,
+		scores: { midterm: 80, final: 90 },  //embedded document
+		hobbies: ["coding", "dancing"]
+	},
+	{
+		name: "Vaidehi Joshi",
+		roll_no: 2,
+		branch: "Computer Science",
+		cgpa: 8.5,
+		scores: { midterm: 60, final: 90 },
+		hobbies: ["coding", "dancing"]
+	},
+	{
+		name: "Rutuj Desale",
+		roll_no: 3,
+		branch: "Electronics",
+		cgpa: 8.0,
+		scores: { midterm: 60, final: 80 },
+		hobbies: ["gaming", "swimming"]
+	},
+	{
+		name: "Sukanya Gupta",
+		roll_no: 4,
+		branch: "Mechanical",
+		cgpa: 9.0,
+		scores: { midterm: 80, final: 80 },
+		hobbies: ["coding", "music"]
+	},
+	{
+		name: "Rupali Joshi",
+		roll_no: 5,
+		branch: "Computer Science",
+		cgpa: 9.5,
+		scores: { midterm: 80, final: 90 },
+		hobbies: ["gaming", "dancing"]
+	},
+	{
+		name: "Abhijeet Joshi",
+		roll_no: 6,
+		branch: "Mechanical",
+		cgpa: 10.0,
+		scores: { midterm: 100, final: 100 },
+		hobbies: ["reading", "music"]
+	},
+	{
+		name: "Sanvi Aher",
+		roll_no: 7,
+		branch: "Electronics",
+		cgpa: 8.5,
+		scores: { midterm: 60, final: 90 },
+		hobbies: ["swimming", "dancing"]
+	},
+]);
+
+// Find all documents
+dbmsl> db.students.find().pretty();
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b112'),
+    name: 'Nupoor Joshi',
+    roll_no: 1,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'coding', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b113'),
+    name: 'Vaidehi Joshi',
+    roll_no: 2,
+    branch: 'Computer Science',
+    cgpa: 8.5,
+    scores: { midterm: 60, final: 90 },
+    hobbies: [ 'coding', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b114'),
+    name: 'Rutuj Desale',
+    roll_no: 3,
+    branch: 'Electronics',
+    cgpa: 8,
+    scores: { midterm: 60, final: 80 },
+    hobbies: [ 'gaming', 'swimming' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b115'),
+    name: 'Sukanya Gupta',
+    roll_no: 4,
+    branch: 'Mechanical',
+    cgpa: 9,
+    scores: { midterm: 80, final: 80 },
+    hobbies: [ 'coding', 'music' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b116'),
+    name: 'Rupali Joshi',
+    roll_no: 5,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'gaming', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b117'),
+    name: 'Abhijeet Joshi',
+    roll_no: 6,
+    branch: 'Mechanical',
+    cgpa: 10,
+    scores: { midterm: 100, final: 100 },
+    hobbies: [ 'reading', 'music' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b118'),
+    name: 'Sanvi Aher',
+    roll_no: 7,
+    branch: 'Electronics',
+    cgpa: 8.5,
+    scores: { midterm: 60, final: 90 },
+    hobbies: [ 'swimming', 'dancing' ]
+  }
+]
+
+//Find documents with a specific field
+dbmsl> db.students.find({branch: "Computer Science", cgpa: 9.5}).pretty();
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b112'),
+    name: 'Nupoor Joshi',
+    roll_no: 1,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'coding', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b116'),
+    name: 'Rupali Joshi',
+    roll_no: 5,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'gaming', 'dancing' ]
+  }
+]
+
+//Find method with projection
+dbmsl> db.students.find({branch: "Electronics"}, {_id: 0, name: 1, cgpa: 1});
+[
+  { name: 'Rutuj Desale', cgpa: 8 },
+  { name: 'Sanvi Aher', cgpa: 8.5 }
+]
+
+//Find students with cgpa >= 9.5; COMPARISON OPERATORS
+dbmsl> db.students.find({ cgpa: { $gte: 9.5 } }).pretty(); 
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b112'),
+    name: 'Nupoor Joshi',
+    roll_no: 1,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'coding', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b116'),
+    name: 'Rupali Joshi',
+    roll_no: 5,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'gaming', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b117'),
+    name: 'Abhijeet Joshi',
+    roll_no: 6,
+    branch: 'Mechanical',
+    cgpa: 10,
+    scores: { midterm: 100, final: 100 },
+    hobbies: [ 'reading', 'music' ]
+  }
+]
+
+//Find 'Electronics' or 'Mechanical' students; LOGICAL OPERATORS
+dbmsl> db.students.find({ $or: [ {branch: "Electronics"}, {branch: "Mechanical"} ] }).pretty();
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b114'),
+    name: 'Rutuj Desale',
+    roll_no: 3,
+    branch: 'Electronics',
+    cgpa: 8,
+    scores: { midterm: 60, final: 80 },
+    hobbies: [ 'gaming', 'swimming' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b115'),
+    name: 'Sukanya Gupta',
+    roll_no: 4,
+    branch: 'Mechanical',
+    cgpa: 9,
+    scores: { midterm: 80, final: 80 },
+    hobbies: [ 'coding', 'music' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b117'),
+    name: 'Abhijeet Joshi',
+    roll_no: 6,
+    branch: 'Mechanical',
+    cgpa: 10,
+    scores: { midterm: 100, final: 100 },
+    hobbies: [ 'reading', 'music' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b118'),
+    name: 'Sanvi Aher',
+    roll_no: 7,
+    branch: 'Electronics',
+    cgpa: 8.5,
+    scores: { midterm: 60, final: 90 },
+    hobbies: [ 'swimming', 'dancing' ]
+  }
+]
+
+//Using Array operator
+dbmsl> db.students.find({branch: {$in: ["Electronics", "Mechanical"] } }).pretty();
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b114'),
+    name: 'Rutuj Desale',
+    roll_no: 3,
+    branch: 'Electronics',
+    cgpa: 8,
+    scores: { midterm: 60, final: 80 },
+    hobbies: [ 'gaming', 'swimming' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b115'),
+    name: 'Sukanya Gupta',
+    roll_no: 4,
+    branch: 'Mechanical',
+    cgpa: 9,
+    scores: { midterm: 80, final: 80 },
+    hobbies: [ 'coding', 'music' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b117'),
+    name: 'Abhijeet Joshi',
+    roll_no: 6,
+    branch: 'Mechanical',
+    cgpa: 10,
+    scores: { midterm: 100, final: 100 },
+    hobbies: [ 'reading', 'music' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b118'),
+    name: 'Sanvi Aher',
+    roll_no: 7,
+    branch: 'Electronics',
+    cgpa: 8.5,
+    scores: { midterm: 60, final: 90 },
+    hobbies: [ 'swimming', 'dancing' ]
+  }
+]
+
+//Find the students with final score > 90
+dbmsl> db.students.find({ "scores.final": { $gt:90 } }).pretty();
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b117'),
+    name: 'Abhijeet Joshi',
+    roll_no: 6,
+    branch: 'Mechanical',
+    cgpa: 10,
+    scores: { midterm: 100, final: 100 },
+    hobbies: [ 'reading', 'music' ]
+  }
+]
+
+//Quering an Array
+//Find students who like 'coding'
+dbmsl> db.students.find({ hobbies: "coding" }).pretty();
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b112'),
+    name: 'Nupoor Joshi',
+    roll_no: 1,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'coding', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b113'),
+    name: 'Vaidehi Joshi',
+    roll_no: 2,
+    branch: 'Computer Science',
+    cgpa: 8.5,
+    scores: { midterm: 60, final: 90 },
+    hobbies: [ 'coding', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b115'),
+    name: 'Sukanya Gupta',
+    roll_no: 4,
+    branch: 'Mechanical',
+    cgpa: 9,
+    scores: { midterm: 80, final: 80 },
+    hobbies: [ 'coding', 'music' ]
+  }
+]
+
+
+//Update one document using $set
+//Change Nupoor's(1) branch to electronics
+db.students.updateOne(
+	{roll_no: 1},
+	{$set: { branch: "Electronics" } }
+);
+dbmsl> db.students.find({roll_no: 1}).pretty();
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b112'),
+    name: 'Nupoor Joshi',
+    roll_no: 1,
+    branch: 'Electronics',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'coding', 'dancing' ]
+  }
+]
+
+//Update many documents
+db.students.updateMany(
+	{branch: "Mechanical"},
+	{$set: {branch: "Chemical"}}
+);
+dbmsl> db.students.find({branch: "Chemical"});
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b115'),
+    name: 'Sukanya Gupta',
+    roll_no: 4,
+    branch: 'Chemical',
+    cgpa: 9,
+    scores: { midterm: 80, final: 80 },
+    hobbies: [ 'coding', 'music' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b117'),
+    name: 'Abhijeet Joshi',
+    roll_no: 6,
+    branch: 'Chemical',
+    cgpa: 10,
+    scores: { midterm: 100, final: 100 },
+    hobbies: [ 'reading', 'music' ]
+  }
+]
+
+//Update an array using $push
+db.students.updateOne(
+	{roll_no: 1},
+	{$push: {hobbies: "gaming"}}
+);
+dbmsl> db.students.find({roll_no: 1});
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b112'),
+    name: 'Nupoor Joshi',
+    roll_no: 1,
+    branch: 'Electronics',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'coding', 'dancing', 'gaming' ]
+  }
+]
+
+//similary use $pull to remove element from an array
+
+//Delete ONE document
+//Delete student with roll no 7
+db.students.deleteOne({roll_no: 1});
+
+
+//Delete MANY documents
+//Delete students with cgpa less than 9.5
+db.students.deleteMany({cgpa: {$lt: 9.5}});
+
+dbmsl> db.students.find();
+[
+  {
+    _id: ObjectId('690b256e096bd6e2e763b116'),
+    name: 'Rupali Joshi',
+    roll_no: 5,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'gaming', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690b256e096bd6e2e763b117'),
+    name: 'Abhijeet Joshi',
+    roll_no: 6,
+    branch: 'Chemical',
+    cgpa: 10,
+    scores: { midterm: 100, final: 100 },
+    hobbies: [ 'reading', 'music' ]
+  }
+]
+
