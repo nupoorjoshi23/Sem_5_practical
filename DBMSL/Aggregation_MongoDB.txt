@@ -1,0 +1,284 @@
+MongoDB Aggregation - 
+Aggregation is the process of taking many documents and processing them through a series of steps to produce a computed result.
+Aggregation Pipeline: Collection of documents passes through several stages. Each stage transforms the data and passes its output to the next stage.
+Syntax:
+db.collection.aggregate([ {<stage 1}, {<stage 2>}, ... ]);
+
+MongoDB Indexing - 
+An index is a special data structure that stores a small portion of the collection's data in an easy-to-traverse form and holds a reference to the original document.
+Without an index - will have to scan every single document to find required data
+With an index - will just have to go to the index and scan that data structure
+
+dbmsl> db.students.drop();
+true
+dbmsl> db.createCollection("students");
+{ ok: 1 }
+
+db.students.insertMany([
+	{
+		name: "Nupoor Joshi",
+		roll_no: 1,
+		branch: "Computer Science",
+		cgpa: 9.5,
+		scores: { midterm: 80, final: 90 },  
+		hobbies: ["coding", "dancing"]
+	},
+	{
+		name: "Vaidehi Joshi",
+		roll_no: 2,
+		branch: "Computer Science",
+		cgpa: 8.5,
+		scores: { midterm: 60, final: 90 },
+		hobbies: ["coding", "dancing"]
+	},
+	{
+		name: "Rutuj Desale",
+		roll_no: 3,
+		branch: "Electronics",
+		cgpa: 8.0,
+		scores: { midterm: 60, final: 80 },
+		hobbies: ["gaming", "swimming"]
+	},
+	{
+		name: "Sukanya Gupta",
+		roll_no: 4,
+		branch: "Mechanical",
+		cgpa: 9.0,
+		scores: { midterm: 80, final: 80 },
+		hobbies: ["coding", "music"]
+	},
+	{
+		name: "Rupali Joshi",
+		roll_no: 5,
+		branch: "Computer Science",
+		cgpa: 9.5,
+		scores: { midterm: 80, final: 90 },
+		hobbies: ["gaming", "dancing"]
+	},
+	{
+		name: "Abhijeet Joshi",
+		roll_no: 6,
+		branch: "Mechanical",
+		cgpa: 10.0,
+		scores: { midterm: 100, final: 100 },
+		hobbies: ["reading", "music"]
+	},
+	{
+		name: "Sanvi Aher",
+		roll_no: 7,
+		branch: "Electronics",
+		cgpa: 8.5,
+		scores: { midterm: 60, final: 90 },
+		hobbies: ["swimming", "dancing"]
+	},
+]);
+
+
+//Single-Field Index; 1 for ascending, -1 for descending
+//Speed up the queries that filter by branch
+db.students.createIndex({ branch: 1 });
+
+//Compound Index
+//Speed up the queries that filter by branch and cgpa
+db.students.createIndex({ branch: 1, cgpa: -1 });
+
+//Index on an Embedded Field
+//Speed up queries that filter by the final score inside scores document 
+db.students.createIndex({ "scores.final": 1});
+
+//Index on array field (multikey index)
+//Speed up the queries that find students by their hobbies
+db.students.createIndex({ hobbies: 1});
+
+
+
+// $match - Find all computer science students
+//This will use index from query 1
+db.students.aggregate([
+	{ $match: {branch: "Computer Science"} }
+]);
+[
+  {
+    _id: ObjectId('690c256fc3fc8e8a5c63b112'),
+    name: 'Nupoor Joshi',
+    roll_no: 1,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'coding', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690c256fc3fc8e8a5c63b113'),
+    name: 'Vaidehi Joshi',
+    roll_no: 2,
+    branch: 'Computer Science',
+    cgpa: 8.5,
+    scores: { midterm: 60, final: 90 },
+    hobbies: [ 'coding', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690c256fc3fc8e8a5c63b116'),
+    name: 'Rupali Joshi',
+    roll_no: 5,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'gaming', 'dancing' ]
+  }
+]
+
+// $match(embedded document) - Find students with final score > 90
+//This will use index from query 3
+db.students.aggregate([
+	{ $match: {"scores.final": {$gt: 90}} }  //scores.final in quotes
+]);
+[
+  {
+    _id: ObjectId('690c256fc3fc8e8a5c63b117'),
+    name: 'Abhijeet Joshi',
+    roll_no: 6,
+    branch: 'Mechanical',
+    cgpa: 10,
+    scores: { midterm: 100, final: 100 },
+    hobbies: [ 'reading', 'music' ]
+  }
+]
+
+// $match(array) - Find all students who like swimming
+//This will use the multikey index
+db.students.aggregate([
+	{ $match: {hobbies: "swimming"} }
+]);
+[
+  {
+    _id: ObjectId('690c256fc3fc8e8a5c63b114'),
+    name: 'Rutuj Desale',
+    roll_no: 3,
+    branch: 'Electronics',
+    cgpa: 8,
+    scores: { midterm: 60, final: 80 },
+    hobbies: [ 'gaming', 'swimming' ]
+  },
+  {
+    _id: ObjectId('690c256fc3fc8e8a5c63b118'),
+    name: 'Sanvi Aher',
+    roll_no: 7,
+    branch: 'Electronics',
+    cgpa: 8.5,
+    scores: { midterm: 60, final: 90 },
+    hobbies: [ 'swimming', 'dancing' ]
+  }
+]
+
+// $count - Count students with cgpa > 9.0
+db.students.aggregate([
+	{ $match: {cgpa: {$gt: 9.0}} },
+	{ $count: "highCGPAcount"}
+]);
+[ { highCGPAcount: 3 } ]
+
+// $sort and $limit - Find the top 3 students by cgpa
+db.students.aggregate([
+	{ $sort: {cgpa: -1} },
+	{ $limit: 3}                //can also add $project in this
+]);
+[
+  {
+    _id: ObjectId('690c256fc3fc8e8a5c63b117'),
+    name: 'Abhijeet Joshi',
+    roll_no: 6,
+    branch: 'Mechanical',
+    cgpa: 10,
+    scores: { midterm: 100, final: 100 },
+    hobbies: [ 'reading', 'music' ]
+  },
+  {
+    _id: ObjectId('690c256fc3fc8e8a5c63b116'),
+    name: 'Rupali Joshi',
+    roll_no: 5,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'gaming', 'dancing' ]
+  },
+  {
+    _id: ObjectId('690c256fc3fc8e8a5c63b112'),
+    name: 'Nupoor Joshi',
+    roll_no: 1,
+    branch: 'Computer Science',
+    cgpa: 9.5,
+    scores: { midterm: 80, final: 90 },
+    hobbies: [ 'coding', 'dancing' ]
+  }
+]
+
+// $group - Calculate avg cgpa for each branch
+db.students.aggregate([
+	{ $group: { _id: "$branch", avgCGPA: {$avg: "$cgpa"} } }  //careful with syntax
+]);
+[
+  { _id: 'Electronics', avgCGPA: 8.25 },
+  { _id: 'Computer Science', avgCGPA: 9.166666666666666 },
+  { _id: 'Mechanical', avgCGPA: 9.5 }
+]
+
+// $group - Find the highest and lowest midterm score per branch
+db.students.aggregate([
+	{
+		$group: {
+			_id: "$branch",
+			maxMidterm: { $max: "$scores.midterm" },
+			minMidterm: { $min: "$scores.midterm"}
+		}
+	}
+]);
+[
+  { _id: 'Electronics', maxMidterm: 60, minMidterm: 60 },
+  { _id: 'Computer Science', maxMidterm: 80, minMidterm: 60 },
+  { _id: 'Mechanical', maxMidterm: 100, minMidterm: 80 }
+]
+
+// $addFields
+//Create a new field totalScore by adding midterm and final scores
+db.students.aggregate([
+	{ $addFields: {totalScore: {$add: ["$scores.midterm", "$scores.final"]}} }
+]);
+
+// $project 
+// Show only name and branch of first two students
+db.students.aggregate([
+	{
+		$project: {
+			_id: 0,
+			name: 1,
+			branch: 1
+		}
+	},
+	{
+		$limit: 2
+	}
+]);
+[
+  { name: 'Nupoor Joshi', branch: 'Computer Science' },
+  { name: 'Vaidehi Joshi', branch: 'Computer Science' }
+]
+
+// 4-operator pipeline
+//Find the average final score for each branch, but only for students with a cgpa of 9.0 or higher. Sort the results to show the branch with highest average final score first
+db.students.aggregate([
+	{ $match: {cgpa: {$gte: 9.0}} },
+	{ 
+		$group: {
+			_id: "$branch",
+			avgFinalscore: {$avg: "$scores.final"}
+	  	}	
+	},
+	{ $sort: {avgFinalscore: -1} },
+	{ 
+		$project: {
+			_id: 0,
+			branch: 1,
+			avgFinalscore: 1
+	  	}
+	}
+]);
