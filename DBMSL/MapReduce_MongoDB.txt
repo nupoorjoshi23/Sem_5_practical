@@ -1,0 +1,137 @@
+MongoDB Map-Reduce
+It is a data processing model that facilitates operations on large data sets to produce aggregated results.
+MongoDB provides the mapReduce() function to perform the map-reduce operations. This function has two main functions, i.e., map function and reduce function.
+
+Syntax - db.collectionName.mapReduce(map(),..reduce(),..query{},..output{});
+map() function: It uses the emit() function which takes two parameters key and value. Key is on which we make groups.
+reduce() function: We perform aggregate functions like avg(), and sum().
+query: pass query to filter the result.
+output: specify the collection name where the result will be stored.
+
+
+db.students.insertMany([
+	{
+		name: "Nupoor Joshi",
+		roll_no: 1,
+		branch: "Computer Science",
+		cgpa: 9.5,
+		scores: { midterm: 80, final: 90 },  
+		hobbies: ["coding", "dancing"]
+	},
+	{
+		name: "Vaidehi Joshi",
+		roll_no: 2,
+		branch: "Computer Science",
+		cgpa: 8.5,
+		scores: { midterm: 60, final: 90 },
+		hobbies: ["coding", "dancing"]
+	},
+	{
+		name: "Rutuj Desale",
+		roll_no: 3,
+		branch: "Electronics",
+		cgpa: 8.0,
+		scores: { midterm: 60, final: 80 },
+		hobbies: ["gaming", "swimming"]
+	},
+	{
+		name: "Sukanya Gupta",
+		roll_no: 4,
+		branch: "Mechanical",
+		cgpa: 9.0,
+		scores: { midterm: 80, final: 80 },
+		hobbies: ["coding", "music"]
+	},
+	{
+		name: "Rupali Joshi",
+		roll_no: 5,
+		branch: "Computer Science",
+		cgpa: 9.5,
+		scores: { midterm: 80, final: 90 },
+		hobbies: ["gaming", "dancing"]
+	},
+	{
+		name: "Abhijeet Joshi",
+		roll_no: 6,
+		branch: "Mechanical",
+		cgpa: 10.0,
+		scores: { midterm: 100, final: 100 },
+		hobbies: ["reading", "music"]
+	},
+	{
+		name: "Sanvi Aher",
+		roll_no: 7,
+		branch: "Electronics",
+		cgpa: 8.5,
+		scores: { midterm: 60, final: 90 },
+		hobbies: ["swimming", "dancing"]
+	},
+]);
+
+//Count the number of students in each branch
+var map1 = function() {
+	emit(this.branch, 1);
+};
+var reduce1 = function(keyBranch, countValues) {
+	return Array.sum(countValues);
+};
+db.students.mapReduce(
+	map1,
+	reduce1,
+	{ out: "count_stu_each_branch" }
+);
+dbmsl> db.count_stu_each_branch.find().pretty();
+[
+  { _id: 'Electronics', value: 2 },
+  { _id: 'Computer Science', value: 3 },
+  { _id: 'Mechanical', value: 2 }
+]
+
+//Count the occurences of each hobby
+var map2 = function() {
+	if(this.hobbies) {
+		this.hobbies.forEach(function(hobby) {
+			emit(hobby, 1);
+		});
+	}
+};
+var reduce2 = function(keyHobby, countValues) {
+	return Array.sum(countValues);
+};
+db.students.mapReduce(
+	map2,
+	reduce2,
+	{ out: "count_hobby" }
+);
+dbmsl> db.count_hobby.find().pretty();
+[
+  { _id: 'dancing', value: 4 },
+  { _id: 'coding', value: 3 },
+  { _id: 'gaming', value: 2 },
+  { _id: 'music', value: 2 },
+  { _id: 'reading', value: 1 },
+  { _id: 'swimming', value: 2 }
+]
+
+//Count the total scores for students with cgpa greater than 9.0
+var map3 = function() {
+	var totalscore = this.scores.midterm + this.scores.final;
+	emit(this.name, totalscore);
+};
+var reduce3 = function(keyName, total) {
+	return Array.sum(total);
+};
+db.students.mapReduce(
+	map3,
+	reduce3,
+	{
+		query: {cgpa: {$gt: 9.0}},
+		out: "total_score"
+	}
+);
+dbmsl> db.total_score.find().pretty();
+[
+  { _id: 'Abhijeet Joshi', value: 200 },
+  { _id: 'Nupoor Joshi', value: 170 },
+  { _id: 'Rupali Joshi', value: 170 }
+]

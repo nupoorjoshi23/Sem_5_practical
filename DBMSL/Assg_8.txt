@@ -1,0 +1,130 @@
+import java.sql.*;
+import java.util.Scanner;
+
+public class Assignment8 {
+    static final String URL = "jdbc:mysql://localhost:3306/my_DB_assg8";  
+    static final String USER = "root";  
+    static final String PASSWORD = "shakatu**";   
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // Create connection
+            Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
+
+            while (true) {
+                System.out.println("\n--- MENU ---");
+                System.out.println("1. Insert");
+                System.out.println("2. Update");
+                System.out.println("3. Delete");
+                System.out.println("4. Display All");
+                System.out.println("5. Display with Condition");
+                System.out.println("6. Exit");
+                System.out.print("Enter choice: ");
+                int choice = sc.nextInt();
+
+                switch (choice) {
+                    case 1:
+                        // Insert
+                        System.out.print("Enter ID: ");
+                        int id = sc.nextInt();
+                        System.out.print("Enter Name: ");
+                        String name = sc.next();
+                        System.out.print("Enter Age: ");
+                        int age = sc.nextInt();
+
+                        String insertQuery = "INSERT INTO student(id, name, age) VALUES (?, ?, ?)";
+                        PreparedStatement insertStmt = con.prepareStatement(insertQuery);
+                        insertStmt.setInt(1, id);
+                        insertStmt.setString(2, name);
+                        insertStmt.setInt(3, age);
+
+                        insertStmt.executeUpdate();
+                        System.out.println("Record Inserted Successfully!");
+                        break;
+
+                    case 2:
+                        // Update
+                        System.out.print("Enter ID to Update: ");
+                        int uid = sc.nextInt();
+                        System.out.print("Enter New Age: ");
+                        int newAge = sc.nextInt();
+
+                        String updateQuery = "UPDATE student SET age=? WHERE id=?";
+                        PreparedStatement updateStmt = con.prepareStatement(updateQuery);
+                        updateStmt.setInt(1, newAge);
+                        updateStmt.setInt(2, uid);
+
+                        int rowsUpdated = updateStmt.executeUpdate();
+                        if (rowsUpdated > 0)
+                            System.out.println("Record Updated Successfully!");
+                        else
+                            System.out.println("Record Not Found!");
+                        break;
+
+                    case 3:
+                        // Delete
+                        System.out.print("Enter ID to Delete: ");
+                        int did = sc.nextInt();
+
+                        String deleteQuery = "DELETE FROM student WHERE id=?";
+                        PreparedStatement deleteStmt = con.prepareStatement(deleteQuery);
+                        deleteStmt.setInt(1, did);
+
+                        int rowsDeleted = deleteStmt.executeUpdate();
+                        if (rowsDeleted > 0)
+                            System.out.println("Record Deleted Successfully!");
+                        else
+                            System.out.println("Record Not Found!");
+                        break;
+
+                    case 4:
+                        // Display All
+                        String selectAll = "SELECT * FROM student";
+                        Statement stmt = con.createStatement();
+                        ResultSet rs = stmt.executeQuery(selectAll);
+
+                        System.out.println("\nID\tName\tAge");
+                        while (rs.next()) {
+                            System.out.println(rs.getInt("id") + "\t" +
+                                               rs.getString("name") + "\t" +
+                                               rs.getInt("age"));
+                        }
+                        break;
+
+                    case 5:
+                        // Display with condition
+                        System.out.print("Enter Minimum Age: ");
+                        int minAge = sc.nextInt();
+
+                        String condQuery = "SELECT * FROM student WHERE age > ?";
+                        PreparedStatement condStmt = con.prepareStatement(condQuery);
+                        condStmt.setInt(1, minAge);
+
+                        ResultSet rs2 = condStmt.executeQuery();
+                        System.out.println("\nID\tName\tAge");
+                        while (rs2.next()) {
+                            System.out.println(rs2.getInt("id") + "\t" +
+                                               rs2.getString("name") + "\t" +
+                                               rs2.getInt("age"));
+                        }
+                        break;
+
+                    case 6:
+                        System.out.println("Exiting...");
+                        con.close();
+                        sc.close();
+                        return;
+
+                    default:
+                        System.out.println("Invalid Choice! Try again.");
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
